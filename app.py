@@ -307,6 +307,87 @@ margin-top:40px;
 
 </section>
 
+<!-- PEGAR AQUÍ EL CRUD -->
+
+<section class="dashboard">
+
+<h2>⚙️ CRUD Productos</h2>
+
+<h3>Crear Producto</h3>
+
+<form method="POST">
+
+<input type="text"
+name="nuevo_nombre"
+placeholder="Nombre del producto"
+required>
+
+<input type="number"
+name="nuevo_precio"
+placeholder="Precio"
+required>
+
+<button name="accion" value="crear">
+Crear Producto
+</button>
+
+</form>
+
+<br>
+
+<h3>Editar Precio</h3>
+
+<form method="POST">
+
+<input type="text"
+name="editar_nombre"
+placeholder="Nombre exacto del producto"
+required>
+
+<input type="number"
+name="editar_precio"
+placeholder="Nuevo precio"
+required>
+
+<button name="accion" value="editar">
+Actualizar Precio
+</button>
+
+</form>
+
+<br>
+
+<h3>Productos Registrados</h3>
+
+<ul>
+
+{% for nombre, precio in productos.items() %}
+
+<li>
+
+{{ nombre }} - S/{{ precio }}
+
+<form method="POST" style="display:inline;">
+
+<input type="hidden"
+name="nombre_producto"
+value="{{ nombre }}">
+
+<button name="accion" value="eliminar">
+Eliminar
+</button>
+
+</form>
+
+</li>
+
+{% endfor %}
+
+</ul>
+
+</section>
+
+
 <footer>
 <p>© 2026 Café Limeño - Proyecto Flask</p>
 </footer>
@@ -322,6 +403,34 @@ def inicio():
     global carrito
 
     if request.method == "POST":
+
+    accion = request.form.get("accion")
+
+    if accion == "crear":
+
+        nombre = request.form["nuevo_nombre"]
+
+        precio = int(request.form["nuevo_precio"])
+
+        productos[nombre] = precio
+
+    elif accion == "editar":
+
+        nombre = request.form["editar_nombre"]
+
+        nuevo_precio = int(request.form["editar_precio"])
+
+        if nombre in productos:
+            productos[nombre] = nuevo_precio
+
+    elif accion == "eliminar":
+
+        nombre = request.form["nombre_producto"]
+
+        if nombre in productos:
+            del productos[nombre]
+
+    else:
 
         nombre = request.form["producto"]
 
@@ -365,15 +474,16 @@ def inicio():
     ultimo = carrito[-1][0] if carrito else ""
 
     return render_template_string(
-        HTML,
-        cafes=cafes,
-        postres=postres,
-        sandwiches=sandwiches,
-        carrito=carrito,
-        total=total,
-        cantidad=len(carrito),
-        ultimo=ultimo
-    )
+    HTML,
+    cafes=cafes,
+    postres=postres,
+    sandwiches=sandwiches,
+    carrito=carrito,
+    total=total,
+    cantidad=len(carrito),
+    ultimo=ultimo,
+    productos=productos
+)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
