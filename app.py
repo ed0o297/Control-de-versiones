@@ -3,176 +3,378 @@ import os
 
 app = Flask(__name__)
 
+productos = {
+    "Espresso": 7,
+    "Americano": 8,
+    "Latte": 10,
+    "Vainilla Latte": 12,
+    "Matcha Latte": 14,
+    "Iced Americano": 10,
+    "Iced Latte": 12,
+    "Iced Vainilla Latte": 14,
+    "Iced Matcha Latte": 16,
+
+    "Cheesecake Maracuyá": 10,
+    "Cheesecake Oreo": 10,
+    "Cheesecake Clásico": 10,
+    "NY Cheesecake": 15,
+    "Torta de Chocolate": 12,
+    "Tiramisú": 12,
+    "Tres Leches Chocolate": 9,
+    "Tres Leches Vainilla": 9,
+    "Carrot Cake": 11,
+
+    "Mixto Simple": 12,
+    "Mixto Especial": 16,
+    "Charsiu": 18,
+    "Club Sandwich": 20
+}
+
+carrito = []
+
 HTML = """
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Café Limeño</title>
 
 <style>
 
-body{
-font-family:Arial,sans-serif;
+*{
 margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
 background:#f5f5f5;
 }
 
 header{
-background:#4b2e2e;
+background:#006241;
 color:white;
-padding:30px;
+padding:25px;
 text-align:center;
 }
 
-section{
+nav{
+background:#1e3932;
+padding:15px;
+text-align:center;
+}
+
+nav a{
+color:white;
+text-decoration:none;
+margin:15px;
+font-weight:bold;
+}
+
+.hero{
+background:white;
+padding:40px;
+text-align:center;
+}
+
+.hero h1{
+font-size:42px;
+margin-bottom:10px;
+}
+
+.hero p{
+font-size:18px;
+color:#555;
+}
+
+.contenedor{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:20px;
 padding:20px;
-max-width:1000px;
-margin:auto;
 }
 
 .card{
 background:white;
-padding:15px;
-margin:10px 0;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,.1);
-}
-
-form{
-background:white;
+width:280px;
 padding:20px;
-border-radius:10px;
+border-radius:15px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
-input{
-width:100%;
-padding:10px;
+.card h3{
+color:#006241;
+margin-bottom:10px;
+}
+
+.card p{
+margin-bottom:10px;
+}
+
+.precio{
+font-weight:bold;
+font-size:18px;
 margin-bottom:10px;
 }
 
 button{
-background:#6f4e37;
+background:#006241;
 color:white;
 border:none;
-padding:12px;
-cursor:pointer;
+padding:10px;
 width:100%;
+border-radius:8px;
+cursor:pointer;
 }
 
-.mensaje{
-background:#d4edda;
-padding:10px;
-margin-bottom:15px;
-border-radius:5px;
+button:hover{
+background:#004d33;
+}
+
+.seccion{
+padding:30px;
+}
+
+.titulo{
+text-align:center;
+font-size:32px;
+margin-bottom:25px;
+color:#1e3932;
+}
+
+.carrito{
+background:white;
+padding:20px;
+margin:30px;
+border-radius:15px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+.dashboard{
+background:#e8f5e9;
+padding:20px;
+margin:30px;
+border-radius:15px;
+}
+
+footer{
+background:#1e3932;
+color:white;
+text-align:center;
+padding:20px;
+margin-top:40px;
 }
 
 </style>
+
 </head>
 
 <body>
 
 <header>
 <h1>☕ Café Limeño</h1>
-<p>Cafetería de especialidad - Lima, Perú</p>
+<p>Cafetería de Especialidad - Lima, Perú</p>
 </header>
 
-<section>
+<nav>
+<a href="#cafes">Cafés</a>
+<a href="#postres">Postres</a>
+<a href="#sandwiches">Sándwiches</a>
+<a href="#carrito">Carrito</a>
+<a href="#dashboard">Dashboard</a>
+</nav>
 
-<h2>☕ Cafés de Especialidad</h2>
+<section class="hero">
+<h1>Bienvenido a Café Limeño</h1>
+<p>Sabores artesanales, cafés de especialidad y postres preparados diariamente.</p>
+</section>
 
+<section class="seccion" id="cafes">
+<h2 class="titulo">☕ Cafés</h2>
+
+<div class="contenedor">
+
+{% for nombre, precio in cafes %}
 <div class="card">
-<h3>Flat White</h3>
-<p>Espresso doble con leche texturizada. Suave y equilibrado.</p>
-</div>
-
-<div class="card">
-<h3>Cappuccino</h3>
-<p>Espresso, leche vaporizada y espuma cremosa.</p>
-</div>
-
-<div class="card">
-<h3>V60 Peruano</h3>
-<p>Café filtrado de granos de Cajamarca con notas frutales.</p>
-</div>
-
-<h2>🥪 Sándwiches</h2>
-
-<div class="card">
-<h3>Sándwich de Pollo</h3>
-<p>Pollo deshilachado, lechuga fresca y mayonesa artesanal.</p>
-</div>
-
-<div class="card">
-<h3>Sándwich Caprese</h3>
-<p>Mozzarella, tomate y pesto.</p>
-</div>
-
-<h2>🍰 Postres</h2>
-
-<div class="card">
-<h3>Torta de Chocolate</h3>
-<p>Bizcocho húmedo con ganache de chocolate.</p>
-</div>
-
-<div class="card">
-<h3>Cheesecake de Maracuyá</h3>
-<p>Cheesecake artesanal con cobertura de maracuyá.</p>
-</div>
-
-<h2>📝 Registro de Pedido</h2>
-
-{% if mensaje %}
-<div class="mensaje">
-{{ mensaje }}
-</div>
-{% endif %}
+<h3>{{ nombre }}</h3>
+<p>Café de especialidad preparado por nuestros baristas.</p>
+<div class="precio">S/{{ precio }}</div>
 
 <form method="POST">
-
-<input type="text"
-name="cliente"
-placeholder="Nombre del cliente"
-required>
-
-<input type="text"
-name="producto"
-placeholder="Producto solicitado"
-required>
-
-<button type="submit">
-Guardar Pedido
-</button>
-
+<input type="hidden" name="producto" value="{{ nombre }}">
+<button type="submit">Agregar al carrito</button>
 </form>
+
+</div>
+{% endfor %}
+
+</div>
+</section>
+
+<section class="seccion" id="postres">
+<h2 class="titulo">🍰 Postres</h2>
+
+<div class="contenedor">
+
+{% for nombre, precio in postres %}
+<div class="card">
+<h3>{{ nombre }}</h3>
+<p>Postre artesanal preparado diariamente.</p>
+<div class="precio">S/{{ precio }}</div>
+
+<form method="POST">
+<input type="hidden" name="producto" value="{{ nombre }}">
+<button type="submit">Agregar al carrito</button>
+</form>
+
+</div>
+{% endfor %}
+
+</div>
+</section>
+
+<section class="seccion" id="sandwiches">
+<h2 class="titulo">🥪 Sándwiches</h2>
+
+<div class="contenedor">
+
+{% for nombre, precio in sandwiches %}
+<div class="card">
+<h3>{{ nombre }}</h3>
+<p>Preparado al momento con ingredientes frescos.</p>
+<div class="precio">S/{{ precio }}</div>
+
+<form method="POST">
+<input type="hidden" name="producto" value="{{ nombre }}">
+<button type="submit">Agregar al carrito</button>
+</form>
+
+</div>
+{% endfor %}
+
+</div>
+</section>
+
+<section id="carrito">
+
+<div class="carrito">
+
+<h2>🛒 Carrito</h2>
+
+{% if carrito %}
+
+<ul>
+
+{% for item in carrito %}
+<li>{{ item[0] }} - S/{{ item[1] }}</li>
+{% endfor %}
+
+</ul>
+
+<h3>Total: S/{{ total }}</h3>
+
+{% else %}
+
+<p>No hay productos agregados.</p>
+
+{% endif %}
+
+</div>
 
 </section>
 
+<section id="dashboard">
+
+<div class="dashboard">
+
+<h2>📊 Dashboard</h2>
+
+<p><strong>Productos agregados:</strong> {{ cantidad }}</p>
+
+<p><strong>Total acumulado:</strong> S/{{ total }}</p>
+
+{% if ultimo %}
+<p><strong>Último producto agregado:</strong> {{ ultimo }}</p>
+{% endif %}
+
+</div>
+
+</section>
+
+<footer>
+<p>© 2026 Café Limeño - Proyecto Flask</p>
+</footer>
+
 </body>
 </html>
+
 """
 
-@app.route("/", methods=["GET","POST"])
+@app.route("/", methods=["GET", "POST"])
 def inicio():
 
-    mensaje = ""
+    global carrito
 
     if request.method == "POST":
 
-        cliente = request.form["cliente"]
-        producto = request.form["producto"]
+        nombre = request.form["producto"]
 
-        with open("pedidos.txt","a",encoding="utf-8") as archivo:
-            archivo.write(f"{cliente},{producto}\\n")
+        precio = productos[nombre]
 
-        mensaje = "Pedido registrado correctamente."
+        carrito.append((nombre, precio))
+
+    total = sum(item[1] for item in carrito)
+
+    cafes = [
+        ("Espresso",7),
+        ("Americano",8),
+        ("Latte",10),
+        ("Vainilla Latte",12),
+        ("Matcha Latte",14),
+        ("Iced Americano",10),
+        ("Iced Latte",12),
+        ("Iced Vainilla Latte",14),
+        ("Iced Matcha Latte",16)
+    ]
+
+    postres = [
+        ("Cheesecake Maracuyá",10),
+        ("Cheesecake Oreo",10),
+        ("Cheesecake Clásico",10),
+        ("NY Cheesecake",15),
+        ("Torta de Chocolate",12),
+        ("Tiramisú",12),
+        ("Tres Leches Chocolate",9),
+        ("Tres Leches Vainilla",9),
+        ("Carrot Cake",11)
+    ]
+
+    sandwiches = [
+        ("Mixto Simple",12),
+        ("Mixto Especial",16),
+        ("Charsiu",18),
+        ("Club Sandwich",20)
+    ]
+
+    ultimo = carrito[-1][0] if carrito else ""
 
     return render_template_string(
         HTML,
-        mensaje=mensaje
+        cafes=cafes,
+        postres=postres,
+        sandwiches=sandwiches,
+        carrito=carrito,
+        total=total,
+        cantidad=len(carrito),
+        ultimo=ultimo
     )
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT",5000))
-    app.run(host="0.0.0.0",port=port)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
