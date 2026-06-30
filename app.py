@@ -3,37 +3,53 @@ import os
 
 app = Flask(__name__)
 
-productos = {
-    "Espresso": 7,
-    "Americano": 8,
-    "Latte": 10,
-    "Vainilla Latte": 12,
-    "Matcha Latte": 14,
-    "Iced Americano": 10,
-    "Iced Latte": 12,
-    "Iced Vainilla Latte": 14,
-    "Iced Matcha Latte": 16,
+# ──────────────────────────────────────────────
+# Catálogo de productos por categoría
+# ──────────────────────────────────────────────
+cafes = [
+    ("Espresso", 7),
+    ("Americano", 8),
+    ("Latte", 10),
+    ("Vainilla Latte", 12),
+    ("Matcha Latte", 14),
+    ("Iced Americano", 10),
+    ("Iced Latte", 12),
+    ("Iced Vainilla Latte", 14),
+    ("Iced Matcha Latte", 16),
+]
 
-    "Cheesecake Maracuyá": 10,
-    "Cheesecake Oreo": 10,
-    "Cheesecake Clásico": 10,
-    "NY Cheesecake": 15,
-    "Torta de Chocolate": 12,
-    "Tiramisú": 12,
-    "Tres Leches Chocolate": 9,
-    "Tres Leches Vainilla": 9,
-    "Carrot Cake": 11,
+postres = [
+    ("Cheesecake Maracuyá", 10),
+    ("Cheesecake Oreo", 10),
+    ("Cheesecake Clásico", 10),
+    ("NY Cheesecake", 15),
+    ("Torta de Chocolate", 12),
+    ("Tiramisú", 12),
+    ("Tres Leches Chocolate", 9),
+    ("Tres Leches Vainilla", 9),
+    ("Carrot Cake", 11),
+]
 
-    "Mixto Simple": 12,
-    "Mixto Especial": 16,
-    "Charsiu": 18,
-    "Club Sandwich": 20
-}
+sandwiches = [
+    ("Mixto Simple", 12),
+    ("Mixto Especial", 16),
+    ("Charsiu", 18),
+    ("Club Sandwich", 20),
+]
 
+# Diccionario único de productos (fuente de verdad para el CRUD y el carrito)
+productos = {}
+for nombre, precio in cafes + postres + sandwiches:
+    productos[nombre] = precio
+
+# Carrito en memoria (persiste mientras el servidor esté activo)
 carrito = []
 
-HTML = """
+# Mensaje de feedback para el usuario tras cada acción (CRUD)
+mensaje = ""
 
+
+HTML = """
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,7 +57,7 @@ HTML = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Café Limeño</title>
+<title>Homies</title>
 
 <style>
 
@@ -158,9 +174,123 @@ box-shadow:0 2px 10px rgba(0,0,0,0.1);
 
 .dashboard{
 background:#e8f5e9;
-padding:20px;
+padding:25px;
 margin:30px;
 border-radius:15px;
+}
+
+.dashboard h2{
+margin-bottom:15px;
+color:#1e3932;
+}
+
+.metricas{
+display:flex;
+flex-wrap:wrap;
+gap:20px;
+margin-top:15px;
+}
+
+.metrica{
+background:white;
+flex:1;
+min-width:180px;
+padding:20px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+.metrica .valor{
+font-size:28px;
+font-weight:bold;
+color:#006241;
+}
+
+.metrica .etiqueta{
+font-size:14px;
+color:#555;
+margin-top:5px;
+}
+
+.crud{
+background:white;
+padding:25px;
+margin:30px;
+border-radius:15px;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+.crud h2{
+color:#1e3932;
+margin-bottom:20px;
+}
+
+.crud h3{
+color:#006241;
+margin-bottom:10px;
+margin-top:20px;
+}
+
+.crud-form{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+align-items:center;
+margin-bottom:10px;
+}
+
+.crud-form input[type="text"],
+.crud-form input[type="number"]{
+padding:10px;
+border:1px solid #ccc;
+border-radius:8px;
+flex:1;
+min-width:160px;
+}
+
+.crud-form button{
+width:auto;
+padding:10px 20px;
+}
+
+.tabla-productos{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+.tabla-productos th,
+.tabla-productos td{
+text-align:left;
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+.tabla-productos th{
+background:#f0f0f0;
+color:#1e3932;
+}
+
+.btn-eliminar{
+background:#c0392b;
+width:auto;
+padding:6px 14px;
+font-size:13px;
+}
+
+.btn-eliminar:hover{
+background:#922b21;
+}
+
+.mensaje{
+background:#d4edda;
+color:#155724;
+padding:12px 20px;
+border-radius:8px;
+margin:20px 30px 0 30px;
+font-weight:bold;
+text-align:center;
 }
 
 footer{
@@ -178,7 +308,7 @@ margin-top:40px;
 <body>
 
 <header>
-<h1>☕ Café Limeño</h1>
+<h1>☕ Homies</h1>
 <p>Cafetería de Especialidad - Lima, Perú</p>
 </header>
 
@@ -188,12 +318,17 @@ margin-top:40px;
 <a href="#sandwiches">Sándwiches</a>
 <a href="#carrito">Carrito</a>
 <a href="#dashboard">Dashboard</a>
+<a href="#crud">Administrar</a>
 </nav>
 
 <section class="hero">
-<h1>Bienvenido a Café Limeño</h1>
+<h1>Bienvenido a Homies</h1>
 <p>Sabores artesanales, cafés de especialidad y postres preparados diariamente.</p>
 </section>
+
+{% if mensaje %}
+<div class="mensaje">{{ mensaje }}</div>
+{% endif %}
 
 <section class="seccion" id="cafes">
 <h2 class="titulo">☕ Cafés</h2>
@@ -201,10 +336,11 @@ margin-top:40px;
 <div class="contenedor">
 
 {% for nombre, precio in cafes %}
+{% if nombre in productos %}
 <div class="card">
 <h3>{{ nombre }}</h3>
 <p>Café de especialidad preparado por nuestros baristas.</p>
-<div class="precio">S/{{ precio }}</div>
+<div class="precio">S/{{ productos[nombre] }}</div>
 
 <form method="POST">
 <input type="hidden" name="producto" value="{{ nombre }}">
@@ -212,6 +348,7 @@ margin-top:40px;
 </form>
 
 </div>
+{% endif %}
 {% endfor %}
 
 </div>
@@ -223,10 +360,11 @@ margin-top:40px;
 <div class="contenedor">
 
 {% for nombre, precio in postres %}
+{% if nombre in productos %}
 <div class="card">
 <h3>{{ nombre }}</h3>
 <p>Postre artesanal preparado diariamente.</p>
-<div class="precio">S/{{ precio }}</div>
+<div class="precio">S/{{ productos[nombre] }}</div>
 
 <form method="POST">
 <input type="hidden" name="producto" value="{{ nombre }}">
@@ -234,6 +372,7 @@ margin-top:40px;
 </form>
 
 </div>
+{% endif %}
 {% endfor %}
 
 </div>
@@ -245,10 +384,11 @@ margin-top:40px;
 <div class="contenedor">
 
 {% for nombre, precio in sandwiches %}
+{% if nombre in productos %}
 <div class="card">
 <h3>{{ nombre }}</h3>
 <p>Preparado al momento con ingredientes frescos.</p>
-<div class="precio">S/{{ precio }}</div>
+<div class="precio">S/{{ productos[nombre] }}</div>
 
 <form method="POST">
 <input type="hidden" name="producto" value="{{ nombre }}">
@@ -256,6 +396,7 @@ margin-top:40px;
 </form>
 
 </div>
+{% endif %}
 {% endfor %}
 
 </div>
@@ -295,195 +436,175 @@ margin-top:40px;
 
 <h2>📊 Dashboard</h2>
 
-<p><strong>Productos agregados:</strong> {{ cantidad }}</p>
+<div class="metricas">
 
-<p><strong>Total acumulado:</strong> S/{{ total }}</p>
+<div class="metrica">
+<div class="valor">{{ cantidad }}</div>
+<div class="etiqueta">Productos en el carrito</div>
+</div>
 
-{% if ultimo %}
-<p><strong>Último producto agregado:</strong> {{ ultimo }}</p>
-{% endif %}
+<div class="metrica">
+<div class="valor">S/{{ total }}</div>
+<div class="etiqueta">Total acumulado</div>
+</div>
+
+<div class="metrica">
+<div class="valor">{{ ultimo if ultimo else "—" }}</div>
+<div class="etiqueta">Último producto agregado</div>
+</div>
+
+<div class="metrica">
+<div class="valor">{{ total_productos }}</div>
+<div class="etiqueta">Productos en catálogo</div>
+</div>
+
+</div>
 
 </div>
 
 </section>
 
-<!-- PEGAR AQUÍ EL CRUD -->
+<section id="crud">
 
-<section class="dashboard">
+<div class="crud">
 
-<h2>⚙️ CRUD Productos</h2>
+<h2>⚙️ Administración de Productos (CRUD)</h2>
 
-<h3>Crear Producto</h3>
+<h3>➕ Crear producto</h3>
 
-<form method="POST">
-
-<input type="text"
-name="nuevo_nombre"
-placeholder="Nombre del producto"
-required>
-
-<input type="number"
-name="nuevo_precio"
-placeholder="Precio"
-required>
-
-<button name="accion" value="crear">
-Crear Producto
-</button>
-
+<form method="POST" class="crud-form">
+<input type="text" name="nuevo_nombre" placeholder="Nombre del producto" required>
+<input type="number" name="nuevo_precio" placeholder="Precio (S/)" min="1" required>
+<button name="accion" value="crear">Crear</button>
 </form>
 
-<br>
+<h3>✏️ Editar precio</h3>
 
-<h3>Editar Precio</h3>
-
-<form method="POST">
-
-<input type="text"
-name="editar_nombre"
-placeholder="Nombre exacto del producto"
-required>
-
-<input type="number"
-name="editar_precio"
-placeholder="Nuevo precio"
-required>
-
-<button name="accion" value="editar">
-Actualizar Precio
-</button>
-
+<form method="POST" class="crud-form">
+<input type="text" name="editar_nombre" placeholder="Nombre exacto del producto" required>
+<input type="number" name="editar_precio" placeholder="Nuevo precio (S/)" min="1" required>
+<button name="accion" value="editar">Actualizar</button>
 </form>
 
-<br>
+<h3>📋 Productos registrados</h3>
 
-<h3>Productos Registrados</h3>
-
-<ul>
+<table class="tabla-productos">
+<tr>
+<th>Producto</th>
+<th>Precio</th>
+<th></th>
+</tr>
 
 {% for nombre, precio in productos.items() %}
-
-<li>
-
-{{ nombre }} - S/{{ precio }}
-
+<tr>
+<td>{{ nombre }}</td>
+<td>S/{{ precio }}</td>
+<td>
 <form method="POST" style="display:inline;">
-
-<input type="hidden"
-name="nombre_producto"
-value="{{ nombre }}">
-
-<button name="accion" value="eliminar">
-Eliminar
-</button>
-
+<input type="hidden" name="nombre_producto" value="{{ nombre }}">
+<button name="accion" value="eliminar" class="btn-eliminar">Eliminar</button>
 </form>
-
-</li>
-
+</td>
+</tr>
 {% endfor %}
 
-</ul>
+</table>
+
+</div>
 
 </section>
 
-
 <footer>
-<p>© 2026 Café Limeño - Proyecto Flask</p>
+<p>© 2026 Homies - Proyecto Flask</p>
 </footer>
 
 </body>
 </html>
-
 """
+
 
 @app.route("/", methods=["GET", "POST"])
 def inicio():
+    global carrito, productos, mensaje
 
-    global carrito
+    mensaje = ""
 
     if request.method == "POST":
+        accion = request.form.get("accion")
 
-    accion = request.form.get("accion")
+        if accion == "crear":
+            nombre = request.form.get("nuevo_nombre", "").strip()
+            precio_raw = request.form.get("nuevo_precio", "")
 
-    if accion == "crear":
+            if not nombre:
+                mensaje = "⚠️ El nombre del producto no puede estar vacío."
+            elif nombre in productos:
+                mensaje = f"⚠️ El producto '{nombre}' ya existe."
+            else:
+                try:
+                    precio = int(precio_raw)
+                    if precio <= 0:
+                        mensaje = "⚠️ El precio debe ser mayor a 0."
+                    else:
+                        productos[nombre] = precio
+                        mensaje = f"✅ Producto '{nombre}' creado correctamente."
+                except ValueError:
+                    mensaje = "⚠️ El precio debe ser un número válido."
 
-        nombre = request.form["nuevo_nombre"]
+        elif accion == "editar":
+            nombre = request.form.get("editar_nombre", "").strip()
+            precio_raw = request.form.get("editar_precio", "")
 
-        precio = int(request.form["nuevo_precio"])
+            if nombre not in productos:
+                mensaje = f"⚠️ El producto '{nombre}' no existe."
+            else:
+                try:
+                    nuevo_precio = int(precio_raw)
+                    if nuevo_precio <= 0:
+                        mensaje = "⚠️ El precio debe ser mayor a 0."
+                    else:
+                        productos[nombre] = nuevo_precio
+                        mensaje = f"✅ Precio de '{nombre}' actualizado a S/{nuevo_precio}."
+                except ValueError:
+                    mensaje = "⚠️ El precio debe ser un número válido."
 
-        productos[nombre] = precio
+        elif accion == "eliminar":
+            nombre = request.form.get("nombre_producto", "")
+            if nombre in productos:
+                del productos[nombre]
+                # Quitar del carrito también los items de ese producto eliminado
+                carrito = [item for item in carrito if item[0] != nombre]
+                mensaje = f"🗑️ Producto '{nombre}' eliminado."
+            else:
+                mensaje = f"⚠️ El producto '{nombre}' no existe."
 
-    elif accion == "editar":
-
-        nombre = request.form["editar_nombre"]
-
-        nuevo_precio = int(request.form["editar_precio"])
-
-        if nombre in productos:
-            productos[nombre] = nuevo_precio
-
-    elif accion == "eliminar":
-
-        nombre = request.form["nombre_producto"]
-
-        if nombre in productos:
-            del productos[nombre]
-
-    else:
-
-        nombre = request.form["producto"]
-
-        precio = productos[nombre]
-
-        carrito.append((nombre, precio))
+        else:
+            # Agregar producto al carrito
+            nombre = request.form.get("producto", "")
+            if nombre in productos:
+                precio = productos[nombre]
+                carrito.append((nombre, precio))
+                mensaje = f"🛒 '{nombre}' agregado al carrito."
+            else:
+                mensaje = "⚠️ Ese producto ya no está disponible."
 
     total = sum(item[1] for item in carrito)
-
-    cafes = [
-        ("Espresso",7),
-        ("Americano",8),
-        ("Latte",10),
-        ("Vainilla Latte",12),
-        ("Matcha Latte",14),
-        ("Iced Americano",10),
-        ("Iced Latte",12),
-        ("Iced Vainilla Latte",14),
-        ("Iced Matcha Latte",16)
-    ]
-
-    postres = [
-        ("Cheesecake Maracuyá",10),
-        ("Cheesecake Oreo",10),
-        ("Cheesecake Clásico",10),
-        ("NY Cheesecake",15),
-        ("Torta de Chocolate",12),
-        ("Tiramisú",12),
-        ("Tres Leches Chocolate",9),
-        ("Tres Leches Vainilla",9),
-        ("Carrot Cake",11)
-    ]
-
-    sandwiches = [
-        ("Mixto Simple",12),
-        ("Mixto Especial",16),
-        ("Charsiu",18),
-        ("Club Sandwich",20)
-    ]
-
     ultimo = carrito[-1][0] if carrito else ""
 
     return render_template_string(
-    HTML,
-    cafes=cafes,
-    postres=postres,
-    sandwiches=sandwiches,
-    carrito=carrito,
-    total=total,
-    cantidad=len(carrito),
-    ultimo=ultimo,
-    productos=productos
-)
+        HTML,
+        cafes=cafes,
+        postres=postres,
+        sandwiches=sandwiches,
+        carrito=carrito,
+        total=total,
+        cantidad=len(carrito),
+        ultimo=ultimo,
+        productos=productos,
+        total_productos=len(productos),
+        mensaje=mensaje,
+    )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
